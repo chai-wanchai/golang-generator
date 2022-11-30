@@ -1,0 +1,18 @@
+package main
+
+import (
+	"fmt"
+	"{{ .PACKAGE_NAME }}/cmd/cmds"
+)
+
+func main() {
+	fmt.Printf(`
+    ___       ______    _____
+   / _  \    |   _  \  |_   _|
+  /  __  \   |   __ /   _ | _
+ /__/  \__\  |__|      |_____|
+
+ %s, built with Go %s
+ `, cmds.AppName, cmds.GoVersion)
+	cmds.Execute()
+}

@@ -1,0 +1,67 @@
+package routers
+
+import (
+	"{{ .PACKAGE_NAME }}/driver"
+	"{{ .PACKAGE_NAME }}/internal/v1/controllers"
+	v1 "{{ .PACKAGE_NAME }}/server/routers/v1"
+	"net/http"
+	"os"
+
+	"github.com/labstack/echo/v4"
+)
+
+type MetaError struct {
+	HttpCode int     `json:"-" example:"500"`
+	Code     string  `json:"code" example:"XXXX"`
+	Message  string  `json:"message" example:"XXXXXX"`
+	Errors   []error `json:"errors" swaggertype:"primitive,array,object"`
+}
+type HealthCheckResponse struct {
+	Version string `json:"version"`
+	Reply   string `json:"reply" example:"ok"`
+}
+
+func SetupRouters(app *echo.Echo, option driver.ServerOption) {
+	controller := controllers.New(&controllers.ControllerDependency{
+		Connections: option.Connection,
+		Config:      option.Config,
+	})
+	v1.SetupV1Route(app, controller)
+}
+
+// HealthCheck HTTPHandler
+// @Tags Healthcheck
+// @Method Get
+// @Accept json
+// Produce json
+// @Success 200 {object} HealthCheckResponse "server is ok"
+// @Router /healthcheck [GET]
+func Healthcheck(ctx echo.Context) error {
+	ctx.JSON(http.StatusOK, HealthCheckResponse{
+		Reply:   "ok",
+		Version: os.Getenv("APP_VERSION"),
+	})
+	return nil
+}
+
+func CustomHTTPErrorNotFound() func(c echo.Context) error {
+	return func(c echo.Context) error {
+		errors := MetaError{
+			HttpCode: 404,
+			Code:     "API-404",
+			Message:  "Not Found",
+		}
+		return c.JSON(errors.HttpCode, errors)
+	}
+}
+
+func CustomHTTPErrorMethodNotAllowed() func(c echo.Context) error {
+	return func(c echo.Context) error {
+		errors := MetaError{
+			HttpCode: 405,
+			Code:     "API-405",
+			Message:  "Method not Allowed",
+		}
+		return c.JSON(errors.HttpCode, errors)
+	}
+}

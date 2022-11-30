@@ -1,0 +1,18 @@
+package testusecase
+
+import "context"
+
+type Service interface {
+	TrackerEvent(ctx context.Context) error
+}
+
+type DepService struct {
+}
+
+func NewService(dep DepService) Service {
+	return DepService{}
+}
+
+func (d DepService) TrackerEvent(ctx context.Context) error {
+	return nil
+}

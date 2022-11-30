@@ -1,0 +1,57 @@
+version: "3.7"
+
+services:
+    {{ .PACKAGE_NAME }}-api:
+        container_name: {{ .PACKAGE_NAME }}-api
+        restart: always
+        build:
+            context: .
+            dockerfile: docker/local/Dockerfile
+        ports:
+            - "${APP_HTTP_PORT}:${APP_HTTP_PORT}"
+        links:
+            - datadog-agent-{{ .PACKAGE_NAME }}
+            - prometheus
+        environment:
+            - DD_AGENT_HOST=datadog-agent-{{ .PACKAGE_NAME }}
+        volumes:
+            - $PWD:/app
+        networks:
+            - luna-network
+  
+    prometheus:
+        container_name: {{ .PACKAGE_NAME }}-prometheus
+        image: prom/prometheus
+        restart: always
+        environment:
+            - APP_HTTP_PORT=${APP_HTTP_PORT}
+        command:
+            - "--config.file=/etc/prometheus/prometheus.yml"
+            - "--storage.tsdb.path=/prometheus"
+            - "--web.console.libraries=/usr/share/prometheus/console_libraries"
+            - "--web.console.templates=/usr/share/prometheus/consoles"
+            - "--web.enable-lifecycle"
+            - "--enable-feature=expand-external-labels"
+        volumes:
+            - $PWD/docker/local/prometheus.yml:/etc/prometheus/prometheus.yml
+        networks:
+            - luna-network
+    grafana:
+        container_name: {{ .PACKAGE_NAME }}-grafana
+        image: grafana/grafana
+        user: root
+        links:
+            - datadog-agent-{{ .PACKAGE_NAME }}
+            - prometheus
+        volumes:
+            - "$PWD/docker/local/grafana/provisioning/:/etc/grafana/provisioning/"
+        environment:
+            - GF_SECURITY_ADMIN_USER=admin
+            - GF_SECURITY_ADMIN_PASSWORD=P@ssw0rd
+            - GF_USERS_ALLOW_SIGN_UP=false
+        networks:
+            - luna-network
+networks:
+    luna-network:
+        external: true
+        name: luna-network

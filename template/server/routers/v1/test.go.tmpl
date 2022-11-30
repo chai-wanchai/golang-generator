@@ -1,0 +1,11 @@
+package v1
+
+import (
+	"{{ .PACKAGE_NAME }}/internal/v1/controllers"
+	"github.com/labstack/echo/v4"
+)
+
+func SetupV1Route(app *echo.Echo, controller controllers.Controllers) {
+	v1 := app.Group("/api/v1")
+	v1.GET("/func", controller.TestController.GET_Test)
+}

@@ -1,0 +1,22 @@
+package testcontrollers
+
+import (
+	"github.com/labstack/echo/v4"
+)
+
+type TestController interface {
+	GET_Test(ctx echo.Context) error
+}
+
+type testController struct {
+}
+
+func NewTransactionController() TestController {
+	return testController{}
+}
+
+func (svc testController) GET_Test(ctx echo.Context) error {
+	return ctx.JSON(200, map[string]string{
+		"func": "GET_Test",
+	})
+}

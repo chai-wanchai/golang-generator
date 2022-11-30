@@ -1,0 +1,56 @@
+package config
+
+import (
+	"log"
+
+	"github.com/joho/godotenv"
+	"github.com/kelseyhightower/envconfig"
+)
+
+type Config struct {
+	APP          appConfig
+	SQL          ReadBitkubWebSql
+	MicroService MicroService
+	EmailService ConfigEmailService
+}
+
+type ReadBitkubWebSql struct {
+	Username string `envconfig:"MYSQL_USERNAME"`
+	Password string `envconfig:"MYSQL_PASSWORD"`
+	Host     string `envconfig:"MYSQL_HOST"`
+	Port     string `envconfig:"MYSQL_PORT"`
+	Db       string `envconfig:"MYSQL_DATABASE"`
+}
+
+type appConfig struct {
+	Host    string `envconfig:"HTTP_HOST" default:"0.0.0.0"`
+	Port    string `envconfig:"APP_HTTP_PORT" default:"8000"`
+	Timeout int    `envconfig:"HTTP_TIMEOUT" default:"10"`
+	AppName string `envconfig:"APP_NAME" default:"golang-api"`
+	Version string `envconfig:"APP_VERSION" default:"v1.0.0"`
+	Env     string `envconfig:"APP_ENV" default:"v1.0.0"`
+}
+type ConfigEmailService struct {
+	HOST     string `envconfig:"MAIL_HOST"`
+	PORT     int    `envconfig:"MAIL_PORT"`
+	USERNAME string `envconfig:"MAIL_USERNAME"`
+	PASSWORD string `envconfig:"MAIL_PASSWORD"`
+}
+
+type MicroService struct {
+	AuthService string `envconfig:"AUTH_API_URL"`
+}
+
+var cfg Config
+
+func New() {
+	_ = godotenv.Load()
+	err := envconfig.Process("", &cfg)
+	if err != nil {
+		log.Fatalf("read env error %v", err)
+	}
+}
+
+func GetConfig() Config {
+	return cfg
+}

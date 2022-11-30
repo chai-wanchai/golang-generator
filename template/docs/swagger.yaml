@@ -1,0 +1,24 @@
+definitions:
+  middleware.HealthCheckResponse:
+    properties:
+      reply:
+        example: ok
+        type: string
+      version:
+        type: string
+    type: object
+info:
+  contact: {}
+paths:
+  /healthcheck:
+    get:
+      consumes:
+      - application/json
+      responses:
+        "200":
+          description: server is ok
+          schema:
+            $ref: '#/definitions/middleware.HealthCheckResponse'
+      tags:
+      - Healthcheck
+swagger: "2.0"

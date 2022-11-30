@@ -1,0 +1,36 @@
+package cmds
+
+import (
+	"os"
+
+	"github.com/spf13/cobra"
+)
+
+// Version defines version
+var (
+	GoVersion = os.Getenv("GOLANG_VERSION")
+	AppName   = os.Getenv("APP_NAME")
+)
+
+/*
+	|--------------------------------------------------------------------------
+	| Application's Command
+	|--------------------------------------------------------------------------
+	|
+	| Here is which command you want to provide for your application
+	| to use in your application.
+	|
+*/
+
+// rootCmd is the root of all sub commands in the binary
+// it doesn't have a Run method as it executes other sub commands
+var rootCmd = &cobra.Command{
+	Use:   "user task",
+	Short: "task manages user task",
+}
+
+func Execute() {
+	rootCmd.AddCommand(serveRESTCmd)
+	cobra.CheckErr(rootCmd.Execute())
+
+}

@@ -1,0 +1,37 @@
+package cmds
+
+import (
+	"context"
+	"fmt"
+	"{{ .PACKAGE_NAME }}/config"
+	"{{ .PACKAGE_NAME }}/driver"
+	"{{ .PACKAGE_NAME }}/server"
+
+	"github.com/spf13/cobra"
+)
+
+var serveRESTCmd = &cobra.Command{
+	Use:   "serve-rest",
+	Short: "start a http server",
+	RunE:  serveREST,
+}
+
+func serveREST(cmd *cobra.Command, args []string) error {
+	return InitRestServer()
+}
+
+func InitRestServer() error {
+	ctx := context.Background()
+	config.New()
+	cfg := config.GetConfig()
+	host := fmt.Sprintf("%s:%s", cfg.APP.Host, cfg.APP.Port)
+	connections := driver.NewConnection(cfg)
+	var option driver.ServerOption = driver.ServerOption{
+		Connection: *connections.GetConnection(),
+		Config:     cfg,
+		Host:       host,
+	}
+
+	err := server.Initial(ctx, option)
+	return err
+}

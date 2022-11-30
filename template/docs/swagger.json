@@ -1,0 +1,40 @@
+{
+    "swagger": "2.0",
+    "info": {
+        "contact": {}
+    },
+    "paths": {
+        "/healthcheck": {
+            "get": {
+                "consumes": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Healthcheck"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "server is ok",
+                        "schema": {
+                            "$ref": "#/definitions/middleware.HealthCheckResponse"
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "definitions": {
+        "middleware.HealthCheckResponse": {
+            "type": "object",
+            "properties": {
+                "reply": {
+                    "type": "string",
+                    "example": "ok"
+                },
+                "version": {
+                    "type": "string"
+                }
+            }
+        }
+    }
+}

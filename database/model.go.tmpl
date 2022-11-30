@@ -1,0 +1,23 @@
+package {{.ModelInfo.StructInfo.Package}}
+
+import (
+	"time"
+)
+{{if .DatabaseName -}}const DatabaseName{{.ModelInfo.ModelStructName}} = "{{.DatabaseName}}"{{- end}}
+{{if .ModelInfo.TableName -}}const TableName{{.ModelInfo.ModelStructName}} = "{{.ModelInfo.TableName}}"{{- end}}
+
+// {{.ModelInfo.ModelStructName}} {{.ModelInfo.StructComment}}
+type {{.ModelInfo.ModelStructName}} struct {
+    {{range .ModelInfo.Fields}}
+	{{if .MultilineComment -}}
+	/*
+{{.ColumnComment}}
+    */
+	{{end -}}
+    {{.Name}} {{.Type}} `{{.Tags}}` {{if not .MultilineComment}}{{if .ColumnComment}}// {{.ColumnComment}}{{end}}{{end}} {{end}}
+}
+
+// Get Alias Full DB and TableName
+func (*{{.ModelInfo.ModelStructName}}) GetAlias() string {
+        return DatabaseName{{.ModelInfo.ModelStructName}}+"."+TableName{{.ModelInfo.ModelStructName}}
+}

@@ -1,0 +1,46 @@
+package driver
+
+import (
+	"database/sql"
+	"fmt"
+
+	_ "github.com/go-sql-driver/mysql"
+	"github.com/jmoiron/sqlx"
+	"github.com/labstack/gommon/log"
+	"gorm.io/driver/mysql"
+	"gorm.io/gorm"
+)
+
+func NewRegistrySQL(username, password, host, port, db string) *sqlx.DB {
+	conn, err := sqlx.Connect("mysql", fmt.Sprintf("%s:%s@(%s:%s)/%s?%s", username, password, host, port, db, "parseTime=true"))
+	if err != nil {
+		log.Error(err.Error())
+	}
+	return conn
+}
+
+type SQLConfig struct {
+	Username string
+	Password string
+	Host     string
+	Port     string
+	DB       string
+}
+
+func NewRegistrySQLWithORM(cfg SQLConfig) *gorm.DB {
+	dsn := fmt.Sprintf("%s:%s@(%s:%s)/%s?%s", cfg.Username, cfg.Password, cfg.Host, cfg.Port, cfg.DB, "parseTime=true")
+
+	sqlDB, errConnect := sql.Open("mysql", dsn)
+	if errConnect != nil {
+		log.Error("failed to connect database: " + errConnect.Error())
+		return nil
+	}
+	sqlDB.SetConnMaxIdleTime(10)
+	conn, err := gorm.Open(mysql.New(mysql.Config{
+		Conn: sqlDB,
+	}), &gorm.Config{})
+	if err != nil {
+		log.Error("failed to connect database: " + err.Error())
+	}
+	return conn
+}

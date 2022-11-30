@@ -1,0 +1,25 @@
+package testrepo
+
+import (
+	"context"
+	"{{ .PACKAGE_NAME }}/driver"
+
+	"gorm.io/gorm"
+)
+
+type Repository interface {
+	GetDataFromDatabase(ctx context.Context) error
+}
+type repository struct {
+	sql *gorm.DB
+}
+
+func NewRepository(conn driver.Connections) Repository {
+	return repository{
+		sql: conn.SqlORM,
+	}
+}
+func (repo repository) GetDataFromDatabase(ctx context.Context) error {
+
+	return nil
+}

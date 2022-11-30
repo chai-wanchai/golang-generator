@@ -1,0 +1,23 @@
+package controllers
+
+import (
+	"{{ .PACKAGE_NAME }}/config"
+	"{{ .PACKAGE_NAME }}/driver"
+	test_controller "{{ .PACKAGE_NAME }}/internal/v1/controllers/test_controllers"
+)
+
+type Controllers struct {
+	TestController test_controller.TestController
+}
+
+type ControllerDependency struct {
+	Config      config.Config
+	Connections driver.Connections
+}
+
+func New(dependency *ControllerDependency) Controllers {
+
+	return Controllers{
+		TestController: test_controller.NewTransactionController(),
+	}
+}

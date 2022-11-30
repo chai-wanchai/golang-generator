@@ -1,0 +1,79 @@
+package server
+
+import (
+	"context"
+	"fmt"
+	"{{ .PACKAGE_NAME }}/docs"
+	"{{ .PACKAGE_NAME }}/driver"
+	"{{ .PACKAGE_NAME }}/server/routers"
+	"os"
+	"os/signal"
+	"strings"
+	"syscall"
+
+	"github.com/google/martian/log"
+	"github.com/labstack/echo-contrib/prometheus"
+	"github.com/labstack/echo/v4"
+	echoMiddleware "github.com/labstack/echo/v4/middleware"
+	echoSwagger "github.com/swaggo/echo-swagger"
+)
+
+func StartEchoApp(option driver.ServerOption) *echo.Echo {
+	docs.SwaggerInfo.Title = option.Config.APP.AppName
+	docs.SwaggerInfo.Version = option.Config.APP.Version
+	docs.SwaggerInfo.Description = fmt.Sprintf("This is %s. \nversion : %s\nENV: %s", option.Config.APP.AppName, option.Config.APP.Version, option.Config.APP.Env)
+	echo.NotFoundHandler = routers.CustomHTTPErrorNotFound()
+	echo.MethodNotAllowedHandler = routers.CustomHTTPErrorMethodNotAllowed()
+
+	p := prometheus.NewPrometheus("echo", nil)
+	app := echo.New()
+	app.HTTPErrorHandler = func(err error, c echo.Context) {
+		metaErr := routers.MetaError{
+			HttpCode: 500,
+			Code:     "API-500",
+			Message:  "Internal Error",
+		}
+		c.JSON(metaErr.HttpCode, metaErr)
+	}
+	p.Use(app)
+	app.Use(echoMiddleware.Recover())
+	app.Use(echoMiddleware.CORS())
+	app.Use(echoMiddleware.RequestID())
+	app.Use(echoMiddleware.GzipWithConfig(echoMiddleware.GzipConfig{
+		Skipper: func(c echo.Context) bool {
+			return strings.Contains(c.Path(), "metrics") // Change "metrics" for your own path
+		},
+	}))
+	app.GET("/healthcheck", routers.Healthcheck)
+	app.GET("/swagger-api-doc/*", echoSwagger.EchoWrapHandler())
+	return app
+}
+func Initial(ctx context.Context, option driver.ServerOption) error {
+
+	app := StartEchoApp(option)
+	routers.SetupRouters(app, option)
+
+	// gracefully shuts down  ...
+	c := make(chan os.Signal, 1)
+	signal.Notify(c, syscall.SIGINT, syscall.SIGTERM)
+
+	// Block until got a signal.
+	go func() {
+		<-c
+		log.Infof("Gracefully shutting down...")
+		err := app.Shutdown(ctx)
+		if err != nil {
+			log.Errorf("Got error: %s while shutting down HTTP server", err)
+		}
+		log.Infof("Gracefully shutting down success")
+		os.Exit(0)
+	}()
+	var port = option.Config.APP.Port
+	err := app.Start(":" + port)
+	if err != nil {
+		return err
+	}
+
+	return nil
+
+}

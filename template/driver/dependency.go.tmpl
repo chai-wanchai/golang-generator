@@ -1,0 +1,58 @@
+package driver
+
+import (
+	"{{ .PACKAGE_NAME }}/config"
+
+	"gorm.io/gorm"
+)
+
+type Connections struct {
+	SqlORM *gorm.DB
+}
+
+type connection struct {
+	db     Connections
+	config config.Config
+}
+type DriverConnection interface {
+	GetConnection() *Connections
+}
+type ServerOption struct {
+	Connection Connections
+	Config     config.Config
+	Host       string
+}
+
+func NewConnection(config config.Config) DriverConnection {
+	conn := createConnections(config)
+	return connection{
+		db:     conn,
+		config: config,
+	}
+}
+
+func (c connection) GetConnection() *Connections {
+	return &Connection
+}
+
+var Connection Connections
+
+func createConnections(cfg config.Config) Connections {
+
+	cfgSqlBitkubWebWrite := SQLConfig{
+		Username: cfg.SQL.Username,
+		Password: cfg.SQL.Password,
+		Host:     cfg.SQL.Host,
+		Port:     cfg.SQL.Port,
+		DB:       cfg.SQL.Db,
+	}
+	sql := NewRegistrySQLWithORM(cfgSqlBitkubWebWrite)
+	var connections Connections = Connections{
+		SqlORM: sql,
+	}
+	Connection = connections
+	return connections
+}
+func GetConnection() *Connections {
+	return &Connection
+}

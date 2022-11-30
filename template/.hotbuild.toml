@@ -1,0 +1,4 @@
+buildcmd = "go build -o ./tmp/main cmd/main.go"
+projectdir = "./"
+excludedir = [".git", "tmp"]
+runcmd = "tmp/main serve-rest"

@@ -1,0 +1,33 @@
+init:
+	go mod tidy
+	go mod vendor
+	make gen-doc
+	
+watch:
+	nodemon --exec go run cmd/main.go serve-rest --signal SIGTERM
+
+run:
+	go run cmd/main.go serve-rest 
+
+build: 
+	go build -a -v -o $(GO_BINARY_NAME) cmd/main.go
+
+build-img:
+	docker build --build-arg GITLAB_ACCESS_TOKEN=${GITLAB_ACCESS_TOKEN} --tag ${MODULE_NAME} .
+	
+run-img:
+	docker run  --env-file ./.env -p 8006:8006 -t ${MODULE_NAME}
+
+test-report:
+	go test ./... -coverprofile test_report.out -v
+	go tool cover -html=test_report.out -o test_report_coverage.html
+	open test_report_coverage.html
+	go test ./... -json | go-test-report
+	open test_report.html
+
+gen-doc:
+	go mod vendor
+	swag init -g cmd/main.go --output docs --parseVendor --exclude=./vendor/github.com,./vendor/go.mongodb.org
+
+
+	
