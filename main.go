@@ -13,35 +13,45 @@ import (
 	"text/template"
 )
 
+// structure กำหนดชุดตัวแปรที่จะใช้ใน template
 type PackageInfo struct {
 	PACKAGE_NAME  string
 	GolangVersion string
 	PathOutput    string
 }
+
+// structure กำหนดชุดตัวแปรที่จะใช้ในการสร้าง model จาก database
 type GenModelInfo struct {
 	RootProjectPath string
 	ModelDir        string
 	DSN             string
 }
+
+// structure กำหนดชุดตัวแปรที่ใช้เก็บข้อมูลของ template
 type Template struct {
 	TemplatePath   string
 	OutPath        string
 	IsTemplateFile bool
 }
 
+// function สำหรับการอ่านและใส่ variable/logic ไปใน template
 func BundleTempleFile(TemplateInfo Template, data PackageInfo) ([]byte, error) {
+	// อ่านไฟล์
 	tmpl, err := template.ParseFiles(TemplateInfo.TemplatePath)
 	if err != nil {
 		log.Fatalf("Can not ParseFiles:%+v\n", err)
 		return nil, err
 	}
 	var process bytes.Buffer
+	// ทำการรวม variable/logic ไปใน template
 	err = tmpl.Execute(&process, data)
 	if err != nil {
 		log.Fatalf("Can not Execute main\n")
 		return nil, err
 	}
+	// เช็คว่าชื่อ template มีนามสกุล .go หรือไม่
 	if strings.Contains(TemplateInfo.OutPath, ".go") {
+		// ถ้าเป็นนามสกุล .go ให้ format ไฟล์เป็น golang แล้วแปลงข้อมูลทั้งหมดเป็น Bytes
 		formatt, err := format.Source(process.Bytes())
 		if err != nil {
 			log.Fatalf("Can not Execute format:%v\n", err)
@@ -49,97 +59,32 @@ func BundleTempleFile(TemplateInfo Template, data PackageInfo) ([]byte, error) {
 		}
 		return formatt, nil
 	} else {
+		// แปลงข้อมูลทั้งหมดเป็น Bytes
 		return process.Bytes(), nil
 	}
-
 }
-func InitProject(data PackageInfo) {
-	pathTemplate := "./template"
-	fullTemplatePath, errAbs := filepath.Abs(pathTemplate)
-	if errAbs != nil {
-		log.Fatalln(errAbs)
-	}
-	rootTemplateDir := filepath.Dir(fullTemplatePath)
-	fileTemplates := []Template{}
-	err := filepath.Walk(pathTemplate, func(path string, info os.FileInfo, err error) error {
-		if err != nil {
-			fmt.Println(err)
-			return err
-		}
-		if !info.IsDir() {
-			isTemplete := false
-			if strings.Contains(path, ".tmpl") {
-				isTemplete = true
-			}
-			fileOutName := strings.ReplaceAll(path, ".tmpl", "")
-			fileOutName = strings.ReplaceAll(fileOutName, ".txt", "")
-			fileOutName = strings.ReplaceAll(fileOutName, "template", "")
-			fileTemplates = append(fileTemplates, Template{
-				TemplatePath:   filepath.Join(rootTemplateDir, path),
-				OutPath:        filepath.Join(data.PathOutput, fileOutName),
-				IsTemplateFile: isTemplete,
-			})
-		}
-		return nil
-	})
-	if err != nil {
-		fmt.Println(err)
-	}
 
-	for _, v := range fileTemplates {
-		fmt.Printf("process : %+v\n", v.TemplatePath)
-		var fileData []byte
-		if v.IsTemplateFile {
-			b, errR := BundleTempleFile(v, data)
-			if errR != nil {
-				log.Fatalf("Error BundleTempleFile: %+v", errR)
-			}
-			fileData = b
-		} else {
-			b, errR := ioutil.ReadFile(v.TemplatePath)
-			if errR != nil {
-				log.Fatalf("Error ReadFile: %+v", errR)
-			}
-			fileData = b
-		}
-		WriteToFile(fileData, v.OutPath)
-	}
-}
+// function สำหรับเขียนข้อมูลลงไฟล์
 func WriteToFile(fileData []byte, outpath string) {
 	var permission fs.FileMode = 0700
+	// หา parent directory ของไฟล์
 	recusiveDir := filepath.Dir(outpath)
+	// เช็คว่า parent directory มีอยู่หรือไม่
 	if _, err := os.Stat(recusiveDir); os.IsNotExist(err) {
+		// ถ้าไม่มี parent directory ให้สร้างแบบทั้งหมด
 		err := os.MkdirAll(recusiveDir, permission)
 		if err != nil {
 			log.Fatalf("Error Mkdir :%+v\n", err)
 		}
 	}
+	// เขียนจ้อมูลลงไฟล์
 	errW := ioutil.WriteFile(outpath, fileData, permission)
 	if errW != nil {
 		log.Fatalf("Error WriteFile :%+v\n", errW)
 	}
 	fmt.Printf("generate: %s\n", outpath)
 }
-func RootProject() {
-	var outputPath string = "../out"
-	var pInfo PackageInfo = PackageInfo{
-		GolangVersion: "1.18",
-	}
-	fmt.Println("===================== This program is generate golang templete project =====================")
-	fmt.Print("Golang package name: ")
-	fmt.Scanln(&pInfo.PACKAGE_NAME)
-	fmt.Print("Golang Version: ")
-	fmt.Scanln(&pInfo.GolangVersion)
-	fmt.Print("Output Path: ")
-	fmt.Scanln(&outputPath)
-	fullOutputPath, errAbsOut := filepath.Abs(outputPath)
-	if errAbsOut != nil {
-		log.Fatalln(errAbsOut)
-	}
-	pInfo.PathOutput = fullOutputPath
-	fmt.Printf("PackageInfo : %+v", pInfo)
-	InitProject(pInfo)
-}
+
 func GenerateModel() {
 	var outputPath string = "../out"
 	var modelDirPath string = "/internal/v1/models"
