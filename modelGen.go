@@ -6,12 +6,15 @@ import (
 	"go/format"
 	"io"
 	"log"
+	"os"
+	"path/filepath"
 	"strconv"
 	"strings"
 	"text/template"
 
 	"gorm.io/driver/mysql"
 	"gorm.io/gen"
+
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
 )
@@ -78,7 +81,9 @@ func SelectTable(db *gorm.DB) []string {
 	if err != nil {
 		panic(fmt.Errorf("get all tables fail: %w", err))
 	}
+	fmt.Printf("\n===================================\n")
 	tableShow(tableList, 5)
+	fmt.Println("===================================")
 	var selectStr string
 	fmt.Print("Select Table to gen model (ex. 0,1,7,8,9) :")
 	fmt.Scanln(&selectStr)
@@ -133,4 +138,42 @@ func GeneratorModel(packageInfo GenModelInfo, db *gorm.DB, modelName string) {
 	}
 	modelFile := fmt.Sprintf("%s%s/%s.go", packageInfo.RootProjectPath, packageInfo.ModelDir, model.FileName)
 	WriteToFile(formatt, modelFile)
+}
+
+func GenerateModel() {
+	var outputPath string = "../out"
+	var modelDirPath string = "/internal/v1/models"
+	var dsn string
+	var pInfo GenModelInfo = GenModelInfo{
+		RootProjectPath: outputPath,
+		ModelDir:        modelDirPath,
+	}
+
+	fmt.Println("===================== This program is generate golang model =====================")
+	fmt.Print("Root Project Path: ")
+	fmt.Scanln(&outputPath)
+	fmt.Print("Model Dir Path (ex. /internal/v1/models):")
+	fmt.Scanln(&modelDirPath)
+	if modelDirPath == "" {
+		pInfo.ModelDir = "/internal/v1/models"
+	} else {
+		pInfo.ModelDir = modelDirPath
+	}
+	fmt.Print("DSN: ")
+	fmt.Scanln(&dsn)
+	if dsn == "" {
+		pInfo.DSN = os.Getenv("DSN")
+	} else {
+		pInfo.DSN = dsn
+	}
+	fullOutputPath, errAbsOut := filepath.Abs(outputPath)
+	if errAbsOut != nil {
+		log.Fatalln(errAbsOut)
+	}
+	pInfo.RootProjectPath = fullOutputPath
+	db := InitDB(pInfo.DSN)
+	selectTable := SelectTable(db)
+	for _, v := range selectTable {
+		GeneratorModel(pInfo, db, v)
+	}
 }

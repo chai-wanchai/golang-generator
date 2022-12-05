@@ -85,44 +85,6 @@ func WriteToFile(fileData []byte, outpath string) {
 	fmt.Printf("generate: %s\n", outpath)
 }
 
-func GenerateModel() {
-	var outputPath string = "../out"
-	var modelDirPath string = "/internal/v1/models"
-	var dsn string
-	var pInfo GenModelInfo = GenModelInfo{
-		RootProjectPath: outputPath,
-		ModelDir:        modelDirPath,
-	}
-
-	fmt.Println("===================== This program is generate golang model =====================")
-	fmt.Print("Root Project Path: ")
-	fmt.Scanln(&outputPath)
-	fmt.Print("Model Dir Path (ex. /internal/v1/models):")
-	fmt.Scanln(&modelDirPath)
-	if modelDirPath == "" {
-		pInfo.ModelDir = "/internal/v1/models"
-	} else {
-		pInfo.ModelDir = modelDirPath
-	}
-	fmt.Print("DSN: ")
-	fmt.Scanln(&dsn)
-	if dsn == "" {
-		pInfo.DSN = os.Getenv("DSN")
-	} else {
-		pInfo.DSN = dsn
-	}
-	fullOutputPath, errAbsOut := filepath.Abs(outputPath)
-	if errAbsOut != nil {
-		log.Fatalln(errAbsOut)
-	}
-	pInfo.RootProjectPath = fullOutputPath
-	fmt.Printf("PackageInfo : %+v", pInfo)
-	db := InitDB(pInfo.DSN)
-	selectTable := SelectTable(db)
-	for _, v := range selectTable {
-		GeneratorModel(pInfo, db, v)
-	}
-}
 func main() {
 	cmd := ""
 	fmt.Println("=========== This command is generate golang project ================")
