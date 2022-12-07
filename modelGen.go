@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"fmt"
 	"go/format"
-	"io"
 	"log"
 	"os"
 	"path/filepath"
@@ -19,13 +18,6 @@ import (
 	"gorm.io/gorm/logger"
 )
 
-func render(tmpl string, wr io.Writer, data interface{}) error {
-	t, err := template.New(tmpl).Parse(tmpl)
-	if err != nil {
-		return err
-	}
-	return t.Execute(wr, data)
-}
 func initGormGen(db *gorm.DB) *gen.Generator {
 	g := gen.NewGenerator(gen.Config{
 		// if you want the nullable field generation property to be pointer type, set FieldNullable true
@@ -118,6 +110,7 @@ func GeneratorModel(packageInfo GenModelInfo, db *gorm.DB, modelName string) {
 		ModelInfo:    model,
 		DatabaseName: dbName,
 	}
+
 	err = tmpl.Execute(&process, data)
 	if err != nil {
 		log.Fatalf("Can not Execute main:%+v\n", err)
