@@ -11,13 +11,19 @@ type {{.ModelInfo.ModelStructName}} struct {
     {{range .ModelInfo.Fields}}
 	{{if .MultilineComment -}}
 	/*
-{{.ColumnComment}}
+    {{.ColumnComment}}
     */
 	{{end -}}
-    {{.Name}} {{.Type}} `{{.Tags}}` {{if not .MultilineComment}}{{if .ColumnComment}}// {{.ColumnComment}}{{end}}{{end}} {{end}}
+        {{.Name}} {{.Type}} `{{.Tags}}` {{if not .MultilineComment}}{{if .ColumnComment}}// {{.ColumnComment}}{{end}}{{end}} 
+    {{end}}
 }
 
 // Get Alias Full DB and TableName
 func (*{{.ModelInfo.ModelStructName}}) GetAlias() string {
         return DatabaseName{{.ModelInfo.ModelStructName}}+"."+TableName{{.ModelInfo.ModelStructName}}
 }
+ 
+{{range .ModelInfo.ModelMethods}}
+	{{if .Doc -}}// {{.DocComment -}}{{end}}
+	func ({{.GetBaseStructTmpl}}){{.MethodName}}({{.GetParamInTmpl}})({{.GetResultParamInTmpl}}){{.Body}}
+{{end}}

@@ -122,16 +122,6 @@ func GeneratorModel(packageInfo GenModelInfo, db *gorm.DB, modelName string) {
 	if err != nil {
 		log.Fatalf("Can not Execute main:%+v\n", err)
 	}
-	const ModelMethod = `
-	{{if .Doc -}}// {{.DocComment -}}{{end}}
-	func ({{.GetBaseStructTmpl}}){{.MethodName}}({{.GetParamInTmpl}})({{.GetResultParamInTmpl}}){{.Body}}
-	`
-	for _, method := range model.ModelMethods {
-		err = render(ModelMethod, &process, method)
-		if err != nil {
-			panic(err)
-		}
-	}
 	formatt, err := format.Source(process.Bytes())
 	if err != nil {
 		log.Fatalf("Can not Execute format:%v\n", err)
